@@ -9,15 +9,15 @@ while(true)
     if (mainMenuOption.ToLower() == "s")
     {
         var game = Menu.GameSetup(user);
-        var gameResult = Menu.PlayGame(game);
+        Menu.PlayGame(game);
+        Menu.GameSummary(game);
+        history.AddGame(game);
 
-        // This will accept the game and will parse the propeties into a string
-        Menu.GameSummary("winner");
         continue;
     }
     else if (mainMenuOption.ToLower() == "h")
     {
-        Menu.DisplayHistory();
+        Menu.DisplayHistory(history);
         continue;
     }
     else if (mainMenuOption.ToLower() == "q")
@@ -76,46 +76,39 @@ public static class Menu
 
     public static Game PlayGame(Game game)
     {
-        Console.Clear();
+        var quiz = new Quiz(game.Type, game.Difficulty);
 
-        // User to confirm ready
+        Console.Clear();
         Console.WriteLine("Are you ready?");
         Console.WriteLine("Hit any key to start");
         Console.ReadLine();
 
-        // start game
         game.StartGame();
-
-        Console.WriteLine("Playing game");
-        var quiz = new Quiz(game.Type, game.Difficulty);
-        // write logic for questions
-        // division
-        // The result must be a whole number
-        // the dividend must be greater than or equal to the divider
-        // increment the dividend until it's a multiple of the dividend
-        // but must still be less than the max
-        Console.ReadLine();
-
-        // end game
+        game.AchievedScore = quiz.AskQuestions();
+        game.MaxPossibleScore = quiz.GetMaxScore();
         game.EndGame();
-        Console.ReadLine();
 
         return game;
     }
 
-    public static void GameSummary(string details)
+    public static void GameSummary(Game details)
     {
         Console.Clear();
-
-        Console.WriteLine(details);
+        Console.WriteLine("Game summary");
+        // TODO: limit to 3 significant figures (milliseconds)
+        Console.WriteLine($"Player: {details.Username} - Difficulty: {details.Difficulty} - GameType: {details.Type} - Score: {details.AchievedScore}/{details.MaxPossibleScore} - Time: {details.GameLength()}");
         Console.ReadLine();
     }
 
-    public static void DisplayHistory()
+    public static void DisplayHistory(History history)
     {
         Console.Clear();
 
-        Console.WriteLine("You played some games");
+        Console.WriteLine("Game History");
+        foreach(var game in history.GetGames())
+        {
+            Console.WriteLine($"Player: {game.Username} - Difficulty: {game.Difficulty} - GameType: {game.Type} - Score: {game.AchievedScore}/{game.MaxPossibleScore} - Time: {game.GameLength()}");
+        }
         Console.ReadLine();
     }
 
@@ -150,20 +143,23 @@ public class Game
     public void StartGame()
     {
         StartTime = DateTime.Now;
-        Console.WriteLine($"Started at {StartTime}");
     }
 
     public void EndGame()
     {
         EndTime = DateTime.Now;
-        Console.WriteLine($"Ended at {EndTime}");
     }
 
-    private string Username { get; set; }
+    public TimeSpan GameLength()
+    {
+        return EndTime - StartTime;
+    }
+
+    public string Username { get; set; }
     private DateTime StartTime { get; set; }
     private DateTime EndTime { get; set; }
-    private int AvailableScore { get; set; }
-    private int AchievedScore { get; set; }
+    public int MaxPossibleScore { get; set; }
+    public int AchievedScore { get; set; }
     public Difficulty Difficulty { get; set; }
     public GameType Type { get; set; }
 }
@@ -187,6 +183,16 @@ public enum Difficulty
 
 public class History
 {
+    public void AddGame(Game game)
+    {
+        Games.Add(game);
+    }
+
+    public List<Game> GetGames()
+    {
+        return Games;
+    }
+
     private List<Game> Games { get; set; } = new List<Game>();
 }
 
@@ -230,34 +236,124 @@ public class Quiz
 {
     public Quiz(GameType gameType, Difficulty difficulty)
     {
-        var minNumber = 0;
-        var maxNumber = 10;
-        var numberOfQuestions = 5;
+        int minNumber = 1;
+        int maxNumber = 10;
+        int numberOfQuestions = 5;
+        GameType questionType = gameType;
 
         if (difficulty == Difficulty.Medium)
         {
-            maxNumber = 100;
+            maxNumber = 20;
             numberOfQuestions = 10;
         }
         else if (difficulty == Difficulty.Hard)
         {
-            maxNumber = 1000;
+            maxNumber = 100;
             numberOfQuestions = 15;
         }
 
         for(var i = 0; i < numberOfQuestions; i++)
         {
             Random random = new Random();
-            decimal firstNumber = random.Next(minNumber, maxNumber + 1);
-            decimal secondNumber = random.Next(minNumber, maxNumber + 1);
+            int firstNumber = random.Next(minNumber, maxNumber + 1);
+            int secondNumber = random.Next(minNumber, maxNumber + 1);
 
-            Console.WriteLine($"{firstNumber} {secondNumber} ({gameType})");
-            var ans = firstNumber / secondNumber;
-            Console.WriteLine($"Ans: {ans}. Is whole number: {ans % 1}");
+            if (gameType == GameType.Mixed)
+            {
+                questionType = GetRandomOperator();
+            }
 
-            var question = new QuizQuestion((int) firstNumber, (int) secondNumber, gameType);
+            if (questionType == GameType.Division)
+            {
+                secondNumber = CalculateDivisor(firstNumber);
+            }
+
+            Questions.Add(new QuizQuestion((int) firstNumber, (int) secondNumber, questionType));
+        }
+    }
+
+    public int AskQuestions()
+    {
+        var score = 0;
+        foreach(var question in Questions)
+        {
+            Console.WriteLine($"What is {question.FirstNumber} {ConvertToOperator(question.QuestionType)} {question.SecondNumber}");
+            int.TryParse(Console.ReadLine(), out int input);
+
+            var answer = 0;
+            if (question.QuestionType == GameType.Addition)
+            {
+                answer = question.FirstNumber + question.SecondNumber;
+            }
+            else if (question.QuestionType == GameType.Subtraction)
+            {
+                answer = question.FirstNumber - question.SecondNumber;
+            }
+            if (question.QuestionType == GameType.Division)
+            {
+                answer = question.FirstNumber / question.SecondNumber;
+            }
+            else if (question.QuestionType == GameType.Multiplication)
+            {
+                answer = question.FirstNumber * question.SecondNumber;
+            }
+
+            if (input == answer)
+            {
+                Console.WriteLine("Correct");
+                score++;
+                continue;
+            }
+
+            Console.WriteLine("Incorrect");
         }
 
+        return score;
+    }
+
+    public int GetMaxScore()
+    {
+        return Questions.Count();
+    }
+
+    private static int CalculateDivisor(int dividend)
+    {
+        Random random = new Random();
+        var secondNumber = random.Next(1, dividend);
+        
+        for(decimal j = secondNumber; j > 0; j--)
+        {
+            if (dividend % j == 0)
+            {
+                secondNumber = Convert.ToInt32(j);
+                break;
+            }
+        }
+
+        return 1;
+    }
+
+    private static GameType GetRandomOperator()
+    {
+        Random random = new Random();
+        // Don't include mixed in options
+        var numberOfOptions = Enum.GetNames(typeof(GameType)).Length - 1;
+        return (GameType) random.Next(0, numberOfOptions);
+    }
+
+    private static char ConvertToOperator(GameType type)
+    {
+        switch(type)
+        {
+            case GameType.Division:
+                return '/';
+            case GameType.Multiplication:
+                return '*';
+            case GameType.Subtraction:
+                return '-';
+            default:
+                return '+';
+        }
     }
 
     private GameType gameType { get; set; }
@@ -272,9 +368,9 @@ public class QuizQuestion
     {
         FirstNumber = firstNumber;
         SecondNumber = secondNumber;
-        GameType = gameType;
+        QuestionType = gameType;
     }
     public int FirstNumber { get; set; }
     public int SecondNumber { get; set; }
-    public GameType GameType { get; set; }
+    public GameType QuestionType { get; set; }
 }
