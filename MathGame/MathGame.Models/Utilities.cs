@@ -10,28 +10,28 @@
             {
                 Console.WriteLine(displayText);
 
-                var enumValues = Enum.GetValues(typeof(TEnum)).Cast<TEnum>();
+                var enumOptions = Enum.GetValues(typeof(TEnum)).Cast<TEnum>();
 
                 // Display options to the user
                 var i = 0;
-                foreach (TEnum value in enumValues)
+                foreach (TEnum option in enumOptions)
                 {
-                    Console.WriteLine($"{i++} - {value}");
+                    Console.WriteLine($"{i++} - {option}");
                 }
 
                 var userSelection = Console.ReadLine();
 
                 // Attempt to parse user input
-                var isOptionParsable = Enum.TryParse<TEnum>(userSelection, out TEnum result);
-                var isOptionDefined = Enum.IsDefined(typeof(TEnum), result);
+                var isOptionParsable = Enum.TryParse<TEnum>(userSelection, out TEnum selectedOption);
+                var isOptionDefined = Enum.IsDefined(typeof(TEnum), selectedOption);
                 if (isOptionParsable && isOptionDefined)
                 {
-                    return result;
+                    return selectedOption;
                 }
 
                 // Handle invalid input
                 Console.Clear();
-                Console.WriteLine($"{result} is an invalid option. Please enter a valid option.");
+                Console.WriteLine($"{selectedOption} is an invalid option. Please enter a valid option.");
             }
         }
     }

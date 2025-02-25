@@ -1,9 +1,5 @@
 ﻿using MathGame.Models.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MathGame.Models.Classes
 {
@@ -30,7 +26,7 @@ namespace MathGame.Models.Classes
             Console.WriteLine("h - Game History");
             Console.WriteLine("q - Quit");
 
-            return Console.ReadLine();
+            return Console.ReadLine() ?? "";
         }
 
         public static Game GameSetup(string username)
@@ -45,13 +41,13 @@ namespace MathGame.Models.Classes
 
         public static Game PlayGame(Game game)
         {
-            var quiz = new Quiz(game.Type, game.Difficulty);
-
             Console.Clear();
 
             Console.WriteLine("Are you ready?");
             Console.WriteLine("Hit any key to start");
             Console.ReadLine();
+
+            var quiz = new Quiz(game.Type, game.Difficulty);
 
             game.StartGame();
             game.AchievedScore = quiz.AskQuestions();
@@ -61,12 +57,12 @@ namespace MathGame.Models.Classes
             return game;
         }
 
-        public static void GameSummary(Game details)
+        public static void GameSummary(Game game)
         {
             Console.Clear();
 
             Console.WriteLine("Game summary");
-            Console.WriteLine($"Player: {details.Username} - Difficulty: {details.Difficulty} - GameType: {details.Type} - Score: {details.AchievedScore}/{details.MaxPossibleScore} - Time: {details.GameLength()}");
+            Console.WriteLine(Summarise(game));
             Console.ReadLine();
         }
 
@@ -77,9 +73,9 @@ namespace MathGame.Models.Classes
             Console.WriteLine("Would you like to play again?");
             Console.WriteLine("y - Yes");
             Console.WriteLine("n - No");
-            var playAgain = Console.ReadLine();
+            var userChoice = Console.ReadLine() ?? "";
 
-            return playAgain.ToLower() == "y";
+            return string.Equals(userChoice.ToLower(), "y");
         }
 
         public static void DisplayHistory(History history)
@@ -89,7 +85,7 @@ namespace MathGame.Models.Classes
             Console.WriteLine("Game History");
             foreach(var game in history.GetGames())
             {
-                Console.WriteLine($"Player: {game.Username} - Difficulty: {game.Difficulty} - GameType: {game.Type} - Score: {game.AchievedScore}/{game.MaxPossibleScore} - Time: {game.GameLength()}");
+                Console.WriteLine(Summarise(game));
             }
             Console.ReadLine();
         }
@@ -102,10 +98,10 @@ namespace MathGame.Models.Classes
             Console.WriteLine("y - Yes");
             Console.WriteLine("n - No");
 
-            return Console.ReadLine();
+            return Console.ReadLine() ?? "";
         }
 
-        public static void Sorry()
+        public static void RepeatOptions()
         {
             Console.Clear();
 
@@ -113,6 +109,18 @@ namespace MathGame.Models.Classes
             Console.WriteLine("Please select an option");
 
             Thread.Sleep(1000);
+        }
+
+        private static string Summarise(Game game)
+        {
+            var summary = new StringBuilder();
+            summary.Append($"Player: {game.Username} - ");
+            summary.Append($"Difficulty: {game.Difficulty} - ");
+            summary.Append($"GameType: {game.Type} - ");
+            summary.Append($"Score: {game.AchievedScore}/{game.MaxPossibleScore} - ");
+            summary.Append($"Time: {game.GameLength()}");
+
+            return summary.ToString();
         }
     }
 }

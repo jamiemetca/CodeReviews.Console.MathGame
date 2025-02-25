@@ -7,7 +7,7 @@ while(true)
 {
     var mainMenuOption = Menu.MainMenu();
 
-    if (mainMenuOption.ToLower() == "s")
+    if (string.Equals(mainMenuOption.ToLower(), "s"))
     {
         while(true)
         {
@@ -24,16 +24,16 @@ while(true)
 
         continue;
     }
-    else if (mainMenuOption.ToLower() == "h")
+    else if (string.Equals(mainMenuOption.ToLower(), "h"))
     {
         Menu.DisplayHistory(history);
         continue;
     }
-    else if (mainMenuOption.ToLower() == "q")
+    else if (string.Equals(mainMenuOption.ToLower(), "q"))
     {
         var response = Menu.ConfirmQuit();
 
-        if (response.ToLower() == "y")
+        if (string.Equals(response.ToLower(), "y"))
         {
             Environment.Exit(0);
         }
@@ -42,7 +42,7 @@ while(true)
     }
     else
     {
-        Menu.Sorry();
+        Menu.RepeatOptions();
     }
 }
 

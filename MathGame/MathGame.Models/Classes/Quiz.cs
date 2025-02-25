@@ -38,7 +38,7 @@ namespace MathGame.Models.Classes
                     secondNumber = CalculateDivisor(firstNumber);
                 }
 
-                Questions.Add(new QuizQuestion((int) firstNumber, (int) secondNumber, questionType));
+                Questions.Add(new QuizQuestion(firstNumber, secondNumber, questionType));
             }
         }
 
@@ -123,8 +123,6 @@ namespace MathGame.Models.Classes
             }
         }
 
-        private GameType gameType { get; set; }
-        private Difficulty Difficulty { get; set; }
         private List<QuizQuestion> Questions { get; set; } = new List<QuizQuestion>();
 
     }
